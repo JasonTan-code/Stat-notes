@@ -1,0 +1,88 @@
+---
+title: "MLE resolve heteroscedasticity"
+author: "Taotao"
+date: "10/25/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Here is a typical heteroscedasticity problem. Try to resolve the problem with maximum likelihood estimation.
+
+we have three parameters to estimate.
+For data generation, we have $\beta_0 = 1$, $\beta_1 = 3$, $k = 0.2$. We have 13 data here.
+
+```{r}
+# create x value 
+x = seq(1,26,by = 2)
+
+# variance has exponential relationship with the x
+var = exp(0.2 * x)
+
+# generate y with rnorm
+y = c()
+for (i in 1:length(x)){
+  y[i] = rnorm(n = 1, mean = 3 * x[i] + 1, sd = var[i])
+}
+
+# plot the x, y
+plot(x, y)
+
+```
+
+The goal here is to build a model which includes the uncertainty (variance). 
+We use maximum likelihood estimation to build the model. Need to estimate three parameters
+
+<br><br>
+
+For a single data, the log likelihood is $l(\beta_1, \beta_2, k|y) = log[\frac{e^{-\frac{(x - \beta_0 - \beta_1x)^2}{2 \sigma^2}}}{\sqrt{2 \pi e^{2kx}}}]  = -\frac{log(2 \pi)}{2} - \frac{kx}{2} - \frac{(y - \beta_0 - \beta_1x)^2}{2 e^{kx}}$
+
+<br><br>
+
+Therefore, we simply need to add all the log likelihood to get the total log likelihood. So, we will have $l(\beta_1, \beta_2, k|y_1, y_2...) = -\sum_{i = 1}^n (\frac{log(2 \pi)}{2} + \frac{kx_i}{2} + \frac{(y_i - \beta_0 - \beta_1x_i)^2}{2 e^{kx_i}})$
+
+<br><br>
+
+There is a nice function to calculate the minimum value of any functions, called optim. We first take the negative of log likelihood function, then plug in all 13 data, and get a function with three independent variables b0, b1, and k. Optim can help us find the parameters. 
+
+```{r}
+ll <- function(z){
+  b0 = z[1]
+  b1 = z[2]
+  k = z[3]
+  
+  return(    log(2*pi)/2   +    k*x[1]/2   +    (y[1] - b0- b1*x[1])^2 /(2*exp(k*x[1])) +
+             log(2*pi)/2   +    k*x[2]/2   +    (y[2] - b0- b1*x[2])^2 /(2*exp(k*x[2])) +
+             log(2*pi)/2   +    k*x[3]/2   +    (y[3] - b0- b1*x[3])^2 /(2*exp(k*x[3])) +
+             log(2*pi)/2   +    k*x[4]/2   +    (y[4] - b0- b1*x[4])^2 /(2*exp(k*x[4])) +
+             log(2*pi)/2   +    k*x[5]/2   +    (y[5] - b0- b1*x[5])^2 /(2*exp(k*x[5])) +
+             log(2*pi)/2   +    k*x[6]/2   +    (y[6] - b0- b1*x[6])^2 /(2*exp(k*x[6])) +
+             log(2*pi)/2   +    k*x[7]/2   +    (y[7] - b0- b1*x[7])^2 /(2*exp(k*x[7])) +
+             log(2*pi)/2   +    k*x[8]/2   +    (y[8] - b0- b1*x[8])^2 /(2*exp(k*x[8])) +
+             log(2*pi)/2   +    k*x[9]/2   +    (y[9] - b0- b1*x[9])^2 /(2*exp(k*x[9])) +
+             log(2*pi)/2   +    k*x[10]/2   +    (y[10] - b0- b1*x[10])^2 /(2*exp(k*x[10])) +
+             log(2*pi)/2   +    k*x[11]/2   +    (y[11] - b0- b1*x[11])^2 /(2*exp(k*x[11])) +
+             log(2*pi)/2   +    k*x[12]/2   +    (y[12] - b0- b1*x[12])^2 /(2*exp(k*x[12])) +
+             log(2*pi)/2   +    k*x[13]/2   +    (y[13] - b0- b1*x[13])^2 /(2*exp(k*x[13])) 
+               
+               ) 
+
+}
+
+
+```
+
+
+Here is the estimated data $\hat \beta_0, \hat \beta_1, \hat k$, this is very close to $\beta_0 = 1$, $\beta_1 = 3$, $k = 0.2$
+```{r}
+# the optimal/estimated parameters: b0_hat, b1_hat, k_hat
+optim(c(1,1,1), ll)$par
+
+# the minimal log likelihood 
+optim(c(1,1,1), ll)$value
+```
+
+
